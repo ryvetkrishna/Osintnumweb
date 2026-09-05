@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wade APIs — OSINT Key Manager</title>
+
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet" />
+
+    <style>
+        /* ─── Root ─── */
+        :root {
+            --wade-primary: #6c3bf1;
+            --wade-primary-dark: #5228c9;
+            --wade-bg: #f6f4fc;
+            --wade-card: #ffffff;
+            --wade-text: #1a142b;
+            --wade-muted: #6e6582;
+            --wade-border: #e9e4f4;
+            --wade-shadow: 0 8px 32px rgba(108, 59, 241, 0.10);
+            --wade-radius: 20px;
+            --wade-radius-sm: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--wade-bg);
+            color: var(--wade-text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ─── Scrollbar ─── */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--wade-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--wade-primary);
+            border-radius: 10px;
+        }
+
+        /* ─── Navbar ─── */
+        .navbar-wade {
+            background: rgba(255, 255, 255, 0.80);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--wade-border);
+            padding: 14px 0;
+        }
+        .navbar-wade .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: -0.5px;
+            color: var(--wade-text);
+        }
+        .navbar-wade .navbar-brand i {
+            color: var(--wade-primary);
+            margin-right: 8px;
+        }
+        .navbar-wade .brand-highlight {
+            color: var(--wade-primary);
+        }
+        .navbar-wade .nav-link {
+            font-weight: 500;
+            color: var(--wade-muted);
+            padding: 8px 18px;
+            border-radius: 40px;
+            transition: 0.2s;
+        }
+        .navbar-wade .nav-link:hover,
+        .navbar-wade .nav-link.active {
+            color: var(--wade-text);
+            background: rgba(108, 59, 241, 0.07);
+        }
+        .btn-wade-primary {
+            background: var(--wade-primary);
+            color: #fff;
+            font-weight: 600;
+            padding: 10px 28px;
+            border-radius: 40px;
+            border: none;
+            transition: 0.2s;
+        }
+        .btn-wade-primary:hover {
+            background: var(--wade-primary-dark);
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(108, 59, 241, 0.30);
+        }
+        .btn-wade-outline {
+            background: transparent;
+            color: var(--wade-primary);
+            font-weight: 600;
+            padding: 10px 28px;
+            border-radius: 40px;
+            border: 2px solid var(--wade-primary);
+            transition: 0.2s;
+        }
+        .btn-wade-outline:hover {
+            background: var(--wade-primary);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        /* ─── Hero ─── */
+        .hero-section {
+            padding: 60px 0 40px;
+            text-align: center;
+        }
+        .hero-section h1 {
+            font-weight: 800;
+            font-size: 3.2rem;
+            letter-spacing: -1.5px;
+            line-height: 1.1;
+        }
+        .hero-section h1 span {
+            color: var(--wade-primary);
+        }
+        .hero-section .subtitle {
+            color: var(--wade-muted);
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 18px auto 32px;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(108, 59, 241, 0.10);
+            color: var(--wade-primary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 6px 18px;
+            border-radius: 40px;
+            margin-bottom: 20px;
+            letter-spacing: 0.3px;
+        }
+
+        /* ─── Cards / Dashboard ─── */
+        .dashboard-card {
+            background: var(--wade-card);
+            border-radius: var(--wade-radius);
+            padding: 24px 28px;
+            box-shadow: var(--wade-shadow);
+            border: 1px solid var(--wade-border);
+            transition: 0.25s ease;
+            height: 100%;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 48px rgba(108, 59, 241, 0.13);
+        }
+        .dashboard-card .card-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: rgba(108, 59, 241, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: var(--wade-primary);
+            margin-bottom: 14px;
+        }
+        .dashboard-card .service-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+        .dashboard-card .service-desc {
+            color: var(--wade-muted);
+            font-size: 0.85rem;
+        }
+        .dashboard-card .key-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 40px;
+            display: inline-block;
+        }
+        .key-status.active {
+            background: #e4f5e9;
+            color: #0e7b3e;
+        }
+        .key-status.inactive {
+            background: #fde8e8;
+            color: #b91c1c;
+        }
+        .key-status.pending {
+            background: #fff3d6;
+            color: #a86b00;
+        }
+        .key-value {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.8rem;
+            background: var(--wade-bg);
+            padding: 6px 14px;
+            border-radius: 40px;
+            color: var(--wade-text);
+            word-break: break-all;
+            max-width: 220px;
+            display: inline-block;
+        }
+
+        /* ─── Forms ─── */
+        .form-wade {
+            background: var(--wade-card);
+            border-radius: var(--wade-radius);
+            padding: 40px 36px;
+            box-shadow: var(--wade-shadow);
+            border: 1px solid var(--wade-border);
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .form-wade .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .form-wade .form-control {
+            border-radius: var(--wade-radius-sm);
+            border: 2px solid var(--wade-border);
+            padding: 12px 16px;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .form-wade .form-control:focus {
+            border-color: var(--wade-primary);
+            box-shadow: 0 0 0 4px rgba(108, 59, 241, 0.12);
+        }
+
+        /* ─── Toast / Alerts ─── */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 9999;
+        }
+        .toast-wade {
+            background: var(--wade-card);
+            border-left: 6px solid var(--wade-primary);
+            border-radius: var(--wade-radius-sm);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            padding: 16px 24px;
+            min-width: 280px;
+            margin-bottom: 12px;
+            animation: slideUp 0.4s ease;
+        }
+        .toast-wade.toast-success {
+            border-left-color: #0e7b3e;
+        }
+        .toast-wade.toast-error {
+            border-left-color: #b91c1c;
+        }
+
+        @keyframes slideUp {
+            0% {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── Footer ─── */
+        .footer-wade {
+            margin-top: auto;
+            padding: 32px 0 24px;
+            border-top: 1px solid var(--wade-border);
+            background: rgba(255, 255, 255, 0.50);
+            text-align: center;
+            color: var(--wade-muted);
+            font-size: 0.9rem;
+        }
+        .footer-wade a {
+            color: var(--wade-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* ─── Responsive ─── */
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2.2rem;
+            }
+            .dashboard-card .key-value {
+                max-width: 140px;
+                font-size: 0.7rem;
+            }
+            .form-wade {
+                padding: 28px 20px;
+                margin: 0 12px;
+            }
+            .navbar-wade .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* ─── Utilities ─── */
+        .text-wade-primary {
+            color: var(--wade-primary);
+        }
+        .bg-wade-soft {
+            background: rgba(108, 59, 241, 0.05);
+        }
+        .gap-2 {
+            gap: 0.5rem;
+        }
+        .gap-3 {
+            gap: 1rem;
+        }
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .transition-all {
+            transition: 0.2s ease;
+        }
+        .no-select {
+            user-select: none;
+        }
+
+        /* loading spinner inline */
+        .spinner-small {
+            width: 18px;
+            height: 18px;
+            border: 2.5px solid var(--wade-border);
+            border-top-color: var(--wade-primary);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Generate button pulse */
+        .btn-generate-pulse {
+            animation: pulse-glow 2s infinite;
+        }
+        @keyframes pulse-glow {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(108, 59, 241, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 0 12px rgba(108, 59, 241, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ─── NAVBAR ─── -->
+    <nav class="navbar navbar-expand-lg navbar-wade sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-lock-fill"></i>Wade<span class="brand-highlight">APIs</span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMenu">
+                <ul class="navbar-nav ms-auto align-items-lg-center gap-1 gap-lg-2">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#services">Services</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#docs">Docs</a>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-wade-primary btn-sm" id="logoutBtn" style="padding:8px 22px;">
+                            <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="container py-4 flex-grow-1">
+
+        <!-- HERO -->
+        <section class="hero-section" id="dashboard">
+            <div class="hero-badge">
+                <i class="bi bi-stars me-1"></i> OSINT Key Management Suite
+            </div>
+            <h1>
+                Generate &amp; Manage<br />
+                <span>OSINT API Keys</span>
+            </h1>
+            <p class="subtitle">
+                One dashboard for all your open-source intelligence API keys.
+                Generate, copy, and rotate keys for 10+ OSINT services.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center gap-3 mt-3">
+                <button class="btn btn-wade-primary" id="refreshDashboardBtn">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh Keys
+                </button>
+                <button class="btn btn-wade-outline" data-bs-toggle="modal" data-bs-target="#generateModal">
+                    <i class="bi bi-plus-circle me-2"></i>New Key
+                </button>
+            </div>
+            <div class="mt-4 text-muted small">
+                <i class="bi bi-shield-check me-1"></i> All keys encrypted at rest
+            </div>
+        </section>
+
+        <!-- ─── DASHBOARD GRID ─── -->
+        <section id="services" class="mt-3">
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-grid-3x3-gap-fill me-2 text-wade-primary"></i>Your Services</h5>
+                <span class="badge bg-wade-soft text-wade-primary fw-semibold px-3 py-2" id="keyCountBadge">0 keys</span>
+            </div>
+
+            <div class="row g-4" id="dashboardGrid">
+                <!-- Cards will be injected by JS -->
+                <div class="col-12 text-center py-5">
+                    <div class="spinner-border text-wade-primary" role="status"></div>
+                    <p class="mt-3 text-muted">Loading your keys…</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ─── GENERATE MODAL ─── -->
+        <div class="modal fade" id="generateModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius:var(--wade-radius);border:none;box-shadow:var(--wade-shadow);">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-key-fill me-2 text-wade-primary"></i>Generate New API Key</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-3">
+                        <form id="generateForm">
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Service <span class="text-danger">*</span></label>
+                                <select class="form-select" id="genService" required>
+                                    <option value="">Choose a service…</option>
+                                    <option value="shodan">Shodan</option>
+                                    <option value="virustotal">VirusTotal</option>
+                                    <option value="hibp">Have I Been Pwned</option>
+                                    <option value="otx">AlienVault OTX</option>
+                                    <option value="greynoise">GreyNoise</option>
+                                    <option value="censys">Censys</option>
+                                    <option value="securitytrails">SecurityTrails</option>
+                                    <option value="spyse">Spyse</option>
+                                    <option value="abuseipdb">AbuseIPDB</option>
+                                    <option value="googlesafebrowsing">Google Safe Browsing</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Description (optional)</label>
+                                <input type="text" class="form-control" id="genDesc" placeholder="e.g. Production key" />
+                            </div>
+                            <div class="alert alert-info small" style="border-radius:var(--wade-radius-sm);background:rgba(108,59,241,0.06);border-color:rgba(108,59,241,0.15);">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Keys are generated with 32-byte secure randomness and encrypted before storage.
+                            </div>
+                            <button type="submit" class="btn btn-wade-primary w-100" id="genSubmitBtn">
+                                <i class="bi bi-plus-circle me-2"></i>Generate &amp; Save
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── EDIT MODAL ─── -->
+        <div class="modal fade" id="editModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius:var(--wade-radius);border:none;box-shadow:var(--wade-shadow);">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-fill me-2 text-wade-primary"></i>Edit Key</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-3">
+                        <form id="editForm">
+                            <input type="hidden" id="editKeyId" />
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Description</label>
+                                <input type="text" class="form-control" id="editDesc" placeholder="Update description" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Status</label>
+                                <select class="form-select" id="editStatus">
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-wade-primary w-100" id="editSubmitBtn">
+                                <i class="bi bi-check2 me-2"></i>Update Key
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── VIEW KEY MODAL ─── -->
+        <div class="modal fade" id="viewModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius:var(--wade-radius);border:none;box-shadow:var(--wade-shadow);">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold"><i class="bi bi-eye-fill me-2 text-wade-primary"></i>Key Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-3">
+                        <div class="mb-3">
+                            <label class="fw-semibold text-muted small text-uppercase">Service</label>
+                            <p class="fw-bold fs-5" id="viewService">—</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-semibold text-muted small text-uppercase">API Key</label>
+                            <div class="d-flex align-items-center gap-2 bg-wade-soft p-2 rounded-3">
+                                <code class="flex-grow-1 text-break" id="viewKeyValue" style="font-size:0.85rem;">—</code>
+                                <button class="btn btn-sm btn-outline-secondary border-0" id="copyKeyBtn" title="Copy">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-semibold text-muted small text-uppercase">Description</label>
+                            <p id="viewDesc" class="mb-0">—</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-semibold text-muted small text-uppercase">Status</label>
+                            <p id="viewStatus" class="mb-0"><span class="badge">—</span></p>
+                        </div>
+                        <div class="mb-0">
+                            <label class="fw-semibold text-muted small text-uppercase">Created</label>
+                            <p id="viewCreated" class="mb-0 small">—</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button class="btn btn-wade-outline btn-sm" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ─── TOAST CONTAINER ─── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ─── FOOTER ─── -->
+    <footer class="footer-wade">
+        <div class="container">
+            <p class="mb-0">
+                <i class="bi bi-shield-lock-fill me-1 text-wade-primary"></i>
+                Wade APIs &middot; OSINT Key Management &middot;
+                <span class="text-muted">v2.0</span>
+                &middot; Built with <i class="bi bi-heart-fill text-danger" style="font-size:0.75rem;"></i>
+            </p>
+        </div>
+    </footer>
+
+
+    <!-- ─── SCRIPTS ─── -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <script>
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        //  Wade APIs — Full Client-Side Application
+        //  (Mock backend with localStorage for demo + Render-ready)
+        // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+        (function() {
+            'use strict';
+
+            // ─── State ───
+            let keys = [];
+            let currentUser = null;
+
+            // ─── DOM refs ───
+            const grid = document.getElementById('dashboardGrid');
+            const countBadge = document.getElementById('keyCountBadge');
+            const genForm = document.getElementById('generateForm');
+            const editForm = document.getElementById('editForm');
+            const genService = document.getElementById('genService');
+            const genDesc = document.getElementById('genDesc');
+            const genSubmitBtn = document.getElementById('genSubmitBtn');
+            const editKeyId = document.getElementById('editKeyId');
+            const editDesc = document.getElementById('editDesc');
+            const editStatus = document.getElementById('editStatus');
+            const editSubmitBtn = document.getElementById('editSubmitBtn');
+            const viewService = document.getElementById('viewService');
+            const viewKeyValue = document.getElementById('viewKeyValue');
+            const viewDesc = document.getElementById('viewDesc');
+            const viewStatus = document.getElementById('viewStatus');
+            const viewCreated = document.getElementById('viewCreated');
+            const copyKeyBtn = document.getElementById('copyKeyBtn');
+            const refreshBtn = document.getElementById('refreshDashboardBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const toastContainer = document.getElementById('toastContainer');
+
+            // ─── Service metadata ───
+            const SERVICE_META = {
+                shodan: { label: 'Shodan', icon: 'bi-binoculars', color: '#e63e3e' },
+                virustotal: { label: 'VirusTotal', icon: 'bi-bug', color: '#1e7b4a' },
+                hibp: { label: 'Have I Been Pwned', icon: 'bi-shield-exclamation', color: '#c7202c' },
+                otx: { label: 'AlienVault OTX', icon: 'bi-robot', color: '#7b3fbd' },
+                greynoise: { label: 'GreyNoise', icon: 'bi-cloud-fog2', color: '#4a5568' },
+                censys: { label: 'Censys', icon: 'bi-search-heart', color: '#0077b6' },
+                securitytrails: { label: 'SecurityTrails', icon: 'bi-compass', color: '#2d6a4f' },
+                spyse: { label: 'Spyse', icon: 'bi-eye', color: '#e85d04' },
+                abuseipdb: { label: 'AbuseIPDB', icon: 'bi-exclamation-triangle', color: '#d62828' },
+                googlesafebrowsing: { label: 'Google Safe Browsing', icon: 'bi-google', color: '#4285f4' },
+            };
+
+            // ─── Helpers ───
+            function generateKey() {
+                const bytes = new Uint8Array(32);
+                crypto.getRandomValues(bytes);
+                return 'wade_' + Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            function formatDate(iso) {
+                if (!iso) return '—';
+                const d = new Date(iso);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit',
+                    minute: '2-digit' });
+            }
+
+            function getStatusBadge(status) {
+                const map = {
+                    active: '<span class="key-status active"><i class="bi bi-check-circle-fill me-1"></i>Active</span>',
+                    inactive: '<span class="key-status inactive"><i class="bi bi-x-circle-fill me-1"></i>Inactive</span>',
+                    pending: '<span class="key-status pending"><i class="bi bi-clock-fill me-1"></i>Pending</span>',
+                };
+                return map[status] || map.pending;
+            }
+
+            function getStatusClass(status) {
+                const map = { active: 'active', inactive: 'inactive', pending: 'pending' };
+                return map[status] || 'pending';
+            }
+
+            function toast(message, type = 'success') {
+                const el = document.createElement('div');
+                el.className = `toast-wade toast-${type}`;
+                const icon = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+                el.innerHTML = `<i class="bi ${icon} me-2"></i> ${message}`;
+                toastContainer.appendChild(el);
+                setTimeout(() => { el.style.opacity = '0';
+                    setTimeout(() => el.remove(), 300); }, 3000);
+            }
+
+            // ─── Storage ───
+            function loadKeys() {
+                try {
+                    const raw = localStorage.getItem('wade_keys');
+                    keys = raw ? JSON.parse(raw) : [];
+                    // migrate old format
+                    keys = keys.filter(k => k && typeof k === 'object');
+                } catch (_) { keys = []; }
+                return keys;
+            }
+
+            function saveKeys() {
+                localStorage.setItem('wade_keys', JSON.stringify(keys));
+            }
+
+            function loadUser() {
+                try {
+                    const raw = localStorage.getItem('wade_user');
+                    currentUser = raw ? JSON.parse(raw) : null;
+                } catch (_) { currentUser = null; }
+                return currentUser;
+            }
+
+            function saveUser(user) {
+                currentUser = user;
+                localStorage.setItem('wade_user', JSON.stringify(user));
+            }
+
+            // ─── Render Dashboard ───
+            function renderDashboard() {
+                loadKeys();
+                if (!keys.length) {
+                    grid.innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <div class="display-6 mb-3" style="color:var(--wade-muted);">🔑</div>
+                            <h5 class="fw-bold">No API keys yet</h5>
+                            <p class="text-muted">Generate your first OSINT API key using the button above.</p>
+                            <button class="btn btn-wade-primary mt-2" data-bs-toggle="modal" data-bs-target="#generateModal">
+                                <i class="bi bi-plus-circle me-2"></i>Generate Key
+                            </button>
+                        </div>
+                    `;
+                    countBadge.textContent = '0 keys';
+                    return;
+                }
+
+                let html = '';
+                keys.forEach((key, idx) => {
+                    const meta = SERVICE_META[key.service] || { label: key.service, icon: 'bi-key',
+                    color: '#6c3bf1' };
+                    const statusClass = getStatusClass(key.status);
+                    html += `
+                        <div class="col-sm-6 col-lg-4 col-xl-3">
+                            <div class="dashboard-card" data-index="${idx}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="card-icon" style="background:${meta.color}14;color:${meta.color};">
+                                        <i class="bi ${meta.icon}"></i>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-link text-muted p-0" data-bs-toggle="dropdown" style="font-size:1.2rem;">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item view-key" href="#" data-idx="${idx}"><i class="bi bi-eye me-2"></i>View</a></li>
+                                            <li><a class="dropdown-item edit-key" href="#" data-idx="${idx}"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger delete-key" href="#" data-idx="${idx}"><i class="bi bi-trash3 me-2"></i>Delete</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="service-name">${meta.label}</div>
+                                <div class="service-desc mb-2">${key.description || 'No description'}</div>
+                                <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                    <span class="key-value">${key.key ? key.key.slice(0, 12) + '…' : '—'}</span>
+                                    ${getStatusBadge(key.status)}
+                                </div>
+                                <div class="mt-2 small text-muted">
+                                    <i class="bi bi-calendar3 me-1"></i>${formatDate(key.createdAt)}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                grid.innerHTML = html;
+                countBadge.textContent = `${keys.length} key${keys.length !== 1 ? 's' : ''}`;
+
+                // ── Attach event listeners ──
+                document.querySelectorAll('.view-key').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const idx = parseInt(el.dataset.idx);
+                        viewKey(idx);
+                    });
+                });
+                document.querySelectorAll('.edit-key').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const idx = parseInt(el.dataset.idx);
+                        openEditModal(idx);
+                    });
+                });
+                document.querySelectorAll('.delete-key').forEach(el => {
+                    el.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const idx = parseInt(el.dataset.idx);
+                        deleteKey(idx);
+                    });
+                });
+            }
+
+            // ─── CRUD ───
+            function addKey(service, description, status = 'active') {
+                const key = {
+                    id: 'key_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    service,
+                    key: generateKey(),
+                    description: description || '',
+                    status,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                };
+                keys.push(key);
+                saveKeys();
+                renderDashboard();
+                toast(`Generated key for ${SERVICE_META[service]?.label || service}`, 'success');
+                return key;
+            }
+
+            function updateKey(id, updates) {
+                const idx = keys.findIndex(k => k.id === id);
+                if (idx === -1) { toast('Key not found.', 'error'); return false; }
+                keys[idx] = { ...keys[idx], ...updates, updatedAt: new Date().toISOString() };
+                saveKeys();
+                renderDashboard();
+                toast('Key updated successfully.', 'success');
+                return true;
+            }
+
+            function deleteKey(idx) {
+                if (idx < 0 || idx >= keys.length) return;
+                const name = SERVICE_META[keys[idx].service]?.label || keys[idx].service;
+                if (!confirm(`Delete ${name} API key? This cannot be undone.`)) return;
+                keys.splice(idx, 1);
+                saveKeys();
+                renderDashboard();
+                toast(`Deleted ${name} key.`, 'success');
+            }
+
+            function viewKey(idx) {
+                const key = keys[idx];
+                if (!key) { toast('Key not found.', 'error'); return; }
+                const meta = SERVICE_META[key.service] || { label: key.service, icon: 'bi-key' };
+                viewService.textContent = meta.label;
+                viewKeyValue.textContent = key.key || '—';
+                viewDesc.textContent = key.description || '—';
+                viewStatus.innerHTML = getStatusBadge(key.status);
+                viewCreated.textContent = formatDate(key.createdAt);
+                // store for copy
+                viewKeyValue.dataset.fullKey = key.key || '';
+                const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+                modal.show();
+            }
+
+            function openEditModal(idx) {
+                const key = keys[idx];
+                if (!key) { toast('Key not found.', 'error'); return; }
+                editKeyId.value = key.id;
+                editDesc.value = key.description || '';
+                editStatus.value = key.status || 'active';
+                const modal = new bootstrap.Modal(document.getElementById('editModal'));
+                modal.show();
+            }
+
+            // ─── Copy key ───
+            copyKeyBtn.addEventListener('click', () => {
+                const fullKey = viewKeyValue.dataset.fullKey || '';
+                if (!fullKey) { toast('No key to copy.', 'error'); return; }
+                navigator.clipboard.writeText(fullKey).then(() => {
+                    toast('Key copied to clipboard!', 'success');
+                }).catch(() => {
+                    // fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = fullKey;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    ta.remove();
+                    toast('Key copied!', 'success');
+                });
+            });
+
+            // ─── Generate form ───
+            genForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const service = genService.value;
+                const desc = genDesc.value.trim();
+                if (!service) { toast('Please select a service.', 'error'); return; }
+                genSubmitBtn.disabled = true;
+                genSubmitBtn.innerHTML = '<span class="spinner-small me-2"></span> Generating…';
+                // simulate async
+                setTimeout(() => {
+                    addKey(service, desc);
+                    genSubmitBtn.disabled = false;
+                    genSubmitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Generate & Save';
+                    genForm.reset();
+                    bootstrap.Modal.getInstance(document.getElementById('generateModal'))?.hide();
+                }, 500);
+            });
+
+            // ─── Edit form ───
+            editForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const id = editKeyId.value;
+                const desc = editDesc.value.trim();
+                const status = editStatus.value;
+                if (!id) { toast('Invalid key.', 'error'); return; }
+                editSubmitBtn.disabled = true;
+                editSubmitBtn.innerHTML = '<span class="spinner-small me-2"></span> Updating…';
+                setTimeout(() => {
+                    updateKey(id, { description: desc, status });
+                    editSubmitBtn.disabled = false;
+                    editSubmitBtn.innerHTML = '<i class="bi bi-check2 me-2"></i>Update Key';
+                    bootstrap.Modal.getInstance(document.getElementById('editModal'))?.hide();
+                }, 400);
+            });
+
+            // ─── Refresh ───
+            refreshBtn.addEventListener('click', () => {
+                renderDashboard();
+                toast('Dashboard refreshed.', 'success');
+            });
+
+            // ─── Logout ───
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Sign out from Wade APIs?')) {
+                    localStorage.removeItem('wade_user');
+                    currentUser = null;
+                    toast('Signed out.', 'success');
+                    renderDashboard();
+                }
+            });
+
+            // ─── Auto-login (demo) ───
+            function initUser() {
+                let user = loadUser();
+                if (!user) {
+                    user = {
+                        id: 'user_' + Date.now(),
+                        name: 'OSINT Analyst',
+                        email: 'analyst@wade.dev',
+                        created: new Date().toISOString(),
+                    };
+                    saveUser(user);
+                }
+                // show user in nav
+                const nav = document.querySelector('.navbar-nav');
+                const userEl = document.createElement('li');
+                userEl.className = 'nav-item';
+                userEl.innerHTML =
+                    `<span class="nav-link active" style="background:transparent;color:var(--wade-text);font-weight:600;"><i class="bi bi-person-circle me-1"></i>${user.name}</span>`;
+                // insert before logout
+                const logoutLi = nav.querySelector('li:last-child');
+                nav.insertBefore(userEl, logoutLi);
+            }
+
+            // ─── Bootstrap modal cleanup ───
+            document.querySelectorAll('.modal').forEach(el => {
+                el.addEventListener('hidden.bs.modal', () => {
+                    // reset forms
+                    const form = el.querySelector('form');
+                    if (form) form.reset();
+                });
+            });
+
+            // ─── Init ───
+            initUser();
+            renderDashboard();
+
+            // also load on page show
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) renderDashboard();
+            });
+
+            // expose for debugging
+            window.__wade = { keys, addKey, updateKey, deleteKey, renderDashboard };
+
+            console.log('🔐 Wade APIs — OSINT Key Manager loaded.');
+            console.log(`📦 ${keys.length} keys in store.`);
+
+        })();
+    </script>
+
+</body>
+</html>
